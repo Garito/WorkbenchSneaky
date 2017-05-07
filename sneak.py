@@ -18,6 +18,10 @@ dict_config = {
   "formatters": {
     "standard": {
       "format": "%(asctime)s %(levelname)s %(module)s %(message)s"
+    },
+    "detailed": {
+      "format": '%(asctime)s %(module)-17s line:%(lineno)-4d ' \
+        '%(levelname)-8s %(message)s'
     }
   },
   "handlers": {
@@ -25,11 +29,20 @@ dict_config = {
       "level": "DEBUG",
       "class": "logging.StreamHandler",
       "formatter": "standard"
+    },
+    "file": {
+      "level": "DEBUG",
+      "class": "logging.handlers.RotatingFileHandler",
+      "formatter": "detailed",
+      "filename": "/tmp/sneaky.log",
+      "mode": "a",
+      "maxBytes": 10485760,
+      "backupCount": 5
     }
   },
   "loggers": {
     "": {
-      "handlers": ["console"],
+      "handlers": ["console", "file"],
       "level": "DEBUG",
     }
   }
