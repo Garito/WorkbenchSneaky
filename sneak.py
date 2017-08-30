@@ -8,7 +8,6 @@ from os.path import exists, expanduser
 from uuid import uuid4
 
 import pyudev
-import requests
 
 from logging import getLogger
 from logging.config import dictConfig
@@ -68,6 +67,26 @@ def get_usb_stick_info(dev):
     "vendor": {"id": dev["ID_VENDOR_ID"], "name": dev["ID_VENDOR"]}, 
     "product": {"id": dev["ID_MODEL_ID"], "name": dev["ID_MODEL"], "serial": dev.get("ID_SERIAL_SHORT", "ID_SERIAL")}}
 
+def push_to_server(action, url, uuid, info):
+  if url.statswith("http"):
+    import requests
+
+    if action == "add":
+      requests.get("{}/plug/{}/{}/{}/{}".format(url, info["product"]["serial"], uuid, info["vendor"]["name"], info["product"]["name"]))
+    else:
+      requests.get("{}/unplug/{}/{}".format(url, info["product"]["serial"], uuid))
+  else:
+    # from celery import Celery
+
+    print url
+
+    # celery = Celery("workbench", broker = settings.get("DEFAULT", "BROKER"))
+
+    # if action == "add":
+
+    # else:
+    #   pass
+
 def sneak(url, uuid_path):
   uuid = read_uuid(uuid_path)
   log.info("Watching {} for {}".format(uuid, url))
@@ -80,12 +99,13 @@ def sneak(url, uuid_path):
       info = get_usb_stick_info(dev)
       if action == "add":
         log.info("Adds: {}".format(info))
-        requests.get("{}/plug/{}/{}/{}/{}".format(url, info["product"]["serial"], uuid, info["vendor"]["name"], info["product"]["name"]))
+        push_to_server("add", url, uuid, info)
+        # requests.get("{}/plug/{}/{}/{}/{}".format(url, info["product"]["serial"], uuid, info["vendor"]["name"], info["product"]["name"]))
       elif action == "remove":
         log.info("Removes: {}".format(info))
-        requests.get("{}/unplug/{}/{}".format(url, info["product"]["serial"], uuid))
+        push_to_server("remove", url, uuid, info)
+        # requests.get("{}/unplug/{}/{}".format(url, info["product"]["serial"], uuid))
 
 if __name__ == "__main__":
   url = argv[1] if len(argv) > 1 else "http://localhost:5000"
   sneak(url, "{}/.eReuseUUID".format(expanduser("~")))
-
