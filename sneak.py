@@ -85,7 +85,7 @@ def push_to_server(action, url, uuid, info):
       celery.send_task("worker.add_usb", [data,])
     else:
       data = {"inventory": uuid}
-      celery.send_task("worker.add_usb", [data,])
+      celery.send_task("worker.del_usb", [data,])
 
 def sneak(url, uuid_path):
   uuid = read_uuid(uuid_path)
