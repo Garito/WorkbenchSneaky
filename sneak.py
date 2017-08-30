@@ -68,7 +68,7 @@ def get_usb_stick_info(dev):
     "product": {"id": dev["ID_MODEL_ID"], "name": dev["ID_MODEL"], "serial": dev.get("ID_SERIAL_SHORT", "ID_SERIAL")}}
 
 def push_to_server(action, url, uuid, info):
-  if url.statswith("http"):
+  if url.startswith("http"):
     import requests
 
     if action == "add":
@@ -76,16 +76,16 @@ def push_to_server(action, url, uuid, info):
     else:
       requests.get("{}/unplug/{}/{}".format(url, info["product"]["serial"], uuid))
   else:
-    # from celery import Celery
+    from celery import Celery
 
-    print url
+    celery = Celery("workbench", broker = url)
 
-    # celery = Celery("workbench", broker = settings.get("DEFAULT", "BROKER"))
-
-    # if action == "add":
-
-    # else:
-    #   pass
+    if action == "add":
+      data = {"inventory": uuid, "vendor": info["vendor"]["name"], "product": info["product"]["name"], "usb": info["product"]["serial"]}
+      celery.send_task("worker.add_usb", [data,])
+    else:
+      data = {"inventory": uuid}
+      celery.send_task("worker.add_usb", [data,])
 
 def sneak(url, uuid_path):
   uuid = read_uuid(uuid_path)
